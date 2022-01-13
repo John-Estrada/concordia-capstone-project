@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title></title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      .centered {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .bg-b {
+        background-color: rgba(0, 0, 255, 0.1);
+      }
+
+      .bg-g {
+        background-color: rgba(0, 255, 0, 0.1);
+      }
+
+      .bg-r {
+        background-color: rgba(255, 0, 0, 0.1);
+      }
+
+      .horizontal-group {
+        justify-content: space-around;
+        flex-direction: row;
+      }
+
+      .heading {
+        text-align: center;
+      }
+
+      .left-side-button-group {
+        display: flex;
+        flex-direction: row;
+        margin: 0.5em;
+      }
+
+      .button {
+        padding: 0.5em;
+        margin: 0.5em;
+      }
+
+      .input-label-group {
+          display: flex;
+          flex-direction: row;
+          margin: 0.25em;
+      }
+
+      .input-label-group div {
+        margin-right: 0.25em;
+        display: flex;
+        text-align: right;
+        margin-right: 0;
+        margin-left: auto;
+      }
+
+      .input-label-group input {
+          margin-right: 0;
+          margin-left: 0.5em;
+      }
+
+      .user-input-buttons div {
+          margin: 0.75em;
+          display: flex;
+            justify-content: right;  
+            margin-left: auto; 
+          margin-right: 0;
+      }
+
+      .horizontal-buttons- {
+          
+      }
+
+      #available-controllers {
+          margin: .5em;
+          padding: .5em;
+      }
+
+      .align-right-wrapper{
+          margin: .5em;
+          display: flex;
+          flex-direction: row;
+      }
+    </style>
+  </head>
+  <body>
+    <!--[if lt IE 7]>
+      <p class="browsehappy">
+        You are using an <strong>outdated</strong> browser. Please
+        <a href="#">upgrade your browser</a> to improve your experience.
+      </p>
+    <![endif]-->
+    <div class="centered horizontal-group bg-b">
+      <div class="left vertical-group bg-g">
+        <div class="heading bg-r" id="left-side-title">User Input</div>
+        <div class="left-side-button-group horizontal-group">
+          <button class="button" id="get-button">Get</button>
+          <button class="button" id="set-button">Set</button>
+          <button class="button" id="view-button">View</button>
+          <button class="button" id="add-button">Add</button>
+        </div>
+
+        <div class="user-input-group bg-r" id="get-input-panel">
+          <div class="heading">Get data from a sensor</div>
+          <div class="input-label-group bg-b">
+            <div>Controller</div>
+            <input type="text" id="get-controller"></input>
+          </div>
+
+          <div class="input-label-group bg-b">
+            <div>Sensor</div>
+            <input type="text" id="get-sensor"></input>
+          </div>
+
+          <div class="input-label-group bg-b">
+            <div>Start</div>
+            <input type="text" id="get-start"></input>
+          </div>
+
+          <div class="input-label-group bg-b">
+            <div>End</div>
+            <input type="text" id="get-end"></input>
+          </div>         
+
+          <div class='user-input-buttons bg-b'>
+              <div class='horizontal-buttons-container'>
+
+                  <button>Clear</button>
+                  <button id="get-submit-button">Submit</button>
+              </div>
+          </div>
+        </div>
+
+        <div class="user-input-group bg-r" id="set-input-panel" style = "display: none">
+            <div class="heading">Set a target value</div>
+            <div class="input-label-group bg-b">
+              <div>Controller</div>
+              <input type="text" id="set-controller"></input>
+            </div>
+  
+            <div class="input-label-group bg-b">
+              <div>Parameter</div>
+              <input type="text" id="set-parameter"></input>
+            </div>
+  
+            <div class="input-label-group bg-b">
+              <div>Device</div>
+              <input type="text" id="set-device"></input>
+            </div>
+  
+            <div class="input-label-group bg-b">
+              <div>Value</div>
+              <input type="text" id="set-value"></input>
+            </div>         
+  
+            <div class='user-input-buttons bg-b'>
+                <div class='horizontal-buttons-container'>
+  
+                    <button>Clear</button>
+                    <button>Submit</button>
+                </div>
+            </div>
+          </div>
+
+          <div class="user-input-group bg-r" id="add-input-panel" style = "display: none">
+            <div class="heading">Add new controller</div>
+            <div class="input-label-group bg-b">
+              <div>Controller</div>
+              <input type="text" id="add-controller"></input>
+            </div>
+  
+            <div class="input-label-group bg-b">
+              <div>Description</div>
+              <input type="text" id="add-description"></input>
+            </div>   
+  
+            <div class='user-input-buttons bg-b'>
+                <div class='horizontal-buttons-container'>
+  
+                    <button>Clear</button>
+                    <button>Submit</button>
+                </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class = "available-controllers-display-panel">
+              <div class='heading'>Available Controllers</div>
+              <div id='available-controllers' class='bg-r'>None</div>
+              <div class='align-right-wrapper bg-b'>
+                  <button id='refresh-controllers-button' class = "bg-r" style='margin-right: 0; margin-left: auto;'>Refresh</button>
+              </div>
+          </div>
+      </div>
+      
+
+      <div class="right vertical-group bg-g">
+        <div class="heading bg-r" id="right-side-title">Results</div>
+        <div id="results">Content</div>
+      </div>
+    </div>
+
+    <script>
+        const baseUrl = "http://localhost:8000/api"
+        let btnGet = document.querySelector("#get-button")
+        let btnSet = document.querySelector("#set-button")
+        let btnView = document.querySelector("#view-button")
+        let btnAdd = document.querySelector("#add-button")
+        let btnRefreshAvailableControllers = document.querySelector("#refresh-controllers-button")
+        let btnGetSubmit = document.querySelector("#get-submit-button")
+
+        let inputPanelGet = document.querySelector("#get-input-panel")
+        let inputPanelSet = document.querySelector('#set-input-panel')
+        let inputPanelView = document.querySelector('#view-input-panel')
+        let inputPanelAdd = document.querySelector('#add-input-panel')
+
+        let textAvailableControllers = document.querySelector("#available-controllers")
+        let textResults = document.querySelector("#results")
+
+        btnGet.addEventListener("click", () => {
+            inputPanelGet.style.display = "block"
+            inputPanelSet.style.display = "none"
+            inputPanelAdd.style.display = "none"
+        })
+
+        btnSet.addEventListener("click", (event) => {
+            inputPanelGet.style.display = "none"
+            inputPanelSet.style=display = "block"
+            inputPanelAdd.style.display = "none"
+        })
+
+        btnAdd.addEventListener("click", () => {
+            inputPanelAdd.style.display = "block"
+            inputPanelGet.style.display = "none"
+            inputPanelSet.style.display = "none"
+        })
+
+        const refreshAvailableControllers = () => {
+            let output = ''
+            
+            let available = fetch(`${baseUrl}/get_available_controllers`)
+            .then(r => r.json())
+            .then(r => {
+                for (let i = 0; i< r.controllers.length; i++) {
+                    output = `${output}ID: ${r.controllers[i][0]}, NAME: ${r.controllers[i][1]}<br>`
+                }
+                textAvailableControllers.innerHTML = output
+            })
+        }
+
+        const getData = () => {
+            let output = ''
+
+            let controller = document.querySelector("#get-controller").value
+            let sensor = document.querySelector("#get-sensor").value
+            let start = document.querySelector("#get-start").value
+            let end = document.querySelector("#get-end").value
+
+            //TODO validate user input
+
+            console.log("" + controller + sensor + start + end)
+
+            //http://localhost:8000/api/generic?sensor=temperature&start=1637105911&end=9999999999&controller=1
+
+            fetch(`${baseUrl}/generic?sensor=${sensor}&start=${start}&end=${end}&controller=${controller}`)
+            .then(r => r.json())
+            .then(r => {
+                console.log(r)
+                if (!r.status === 'success') {
+                    output = 'Request failed'
+                } else {
+                    output = `Sensor: ${r.sensor}<br>`
+                    for (let i = 0; i<r.results.length; i++) {
+                        output = `${output}Timestamp: ${r.results[i][0]}, Value${r.results[i][1]}<br>`
+                    }
+                }
+                textResults.innerHTML = output;
+            })
+        }
+
+        btnRefreshAvailableControllers.addEventListener("click", refreshAvailableControllers)
+        btnGetSubmit.addEventListener("click", getData)
+    </script>
+  </body>
+</html>

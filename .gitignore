@@ -1,0 +1,9 @@
+curl commands.txt
+client/.env
+client/node_modules
+client/yarn-error
+
+server/.env
+
+simplified_wiki.md
+wiki.md
