@@ -28,7 +28,7 @@ function AddControllerDialogBox(props) {
   const nameInput = React.useRef(null);
   const [response, setResponse] = React.useState(null);
 
-  const baseUrl = "http://localhost:8000/api/add_controller";
+  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/add_controller`;
 
   const handleConfirm = () => {
     const params = new URLSearchParams();

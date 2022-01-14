@@ -53,7 +53,7 @@ const StyledRow = styled.div`
 
 //TODO clean up this type of styling
 const Row = (props) => {
-  const baseUrl = "http://localhost:8000/api/target";
+  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/target`;
   const [target, setTarget] = React.useState(props.defaultValue);
   const [buttonDisabled, setButtonDisabled] = React.useState(true);
   const targetSelector = React.useRef(null);
@@ -110,7 +110,7 @@ const Row = (props) => {
 
 function ControllerDetailCard(props) {
   const [devices, setDevices] = React.useState([]);
-  const baseUrl = "http://localhost:8000/api/target";
+  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/target`;
   const params = { id: props.selectedController };
 
   React.useEffect(() => {
