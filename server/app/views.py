@@ -168,6 +168,7 @@ def get_data_as_csv(request):
 
     return response
 
+# Get and set target parameters
 @csrf_exempt
 def target_parameter(request):
     out = {'status': 'failed'}
@@ -223,6 +224,49 @@ def target_parameter(request):
     response['Access-Control-Allow-Headers'] = 'Content-Type'
 
     return response 
+
+# For arduino to report available devices to the server
+'''
+Sample input
+{
+    controller: 1,
+    name: 'temperature', 
+    target: 25.0,
+}
+'''
+@csrf_exempt
+def report_device(request):
+    out = {'message': 'failure'}
+
+    # input : controller id, [(device name, target), ...]
+
+    # post
+    if request.method == 'POST':
+        controller_id = request.POST['controller']
+        device_name = request.POST['name']
+        target = request.POST['target']
+
+        controller = Controller.objects.filter(id = controller_id).first()
+        # if controller does not exist, return error message
+        if controller == None:
+            out['message'] = 'Controller does not exist'
+            return JsonResponse(out)
+
+        # create a new device and save it
+        device = Device.objects.filter(controller = controller, name=device_name).first()
+
+        if device == None:
+            Device.objects.create(controller=controller, name=device_name, target = target)
+            out['message'] = 'success'
+            return JsonResponse(out)
+
+        # if device with same name and controller exists, inform client
+        else:
+            out['message'] = 'This device already exists'
+
+
+    return JsonResponse(out)
+
 
 def home(request):
     out = {'test': 'answer'}

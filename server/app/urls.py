@@ -9,5 +9,6 @@ urlpatterns = [
     path('get_available_controllers', views.get_available_controllers),
     path('get_data_as_csv', views.get_data_as_csv),
     path('target', views.target_parameter),
+    path('report_device', views.report_device),
     path('home', views.home),
 ]
