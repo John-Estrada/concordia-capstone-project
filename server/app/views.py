@@ -16,23 +16,39 @@ def test_view(request):
 @csrf_exempt 
 def generic(request):
     out = {'status':'failure'}
+    missing_parameters = False
 
     # arduino uses this to send data to the server
     if request.method == 'POST':
         print(request.POST)
         server_time = datetime.datetime.now()
+
+        expected_parameters = ['sensor', 'value', 'controller']
+        for param in expected_parameters:
+            if param not in request.POST:
+                missing_parameters = True
+                if 'message' not in out:
+                    out['message'] = 'The following parameters are missing:'
+                out['message'] = f"{out['message']} {param},"
+        
+        if missing_parameters:
+            out['message'] = out['message'][:-1]
+            return JsonResponse(out)
+
+        
         data_type = request.POST['sensor']
         value = float(request.POST['value'])
         controller_name = request.POST['controller'] #name
+        print(f'NAME: {Controller.objects.all()}')
+        
 
-        controller = Controller.objects.get(name=controller_name)
+        try:
+            controller = Controller.objects.get(name=controller_name)
+        except Controller.DoesNotExist:
+            out['message'] = 'The specified controller does not exist'
+            return JsonResponse(out)
 
         print(f"Controller found: id: {controller.id}, name: {controller.name}")
-
-        if controller == None:
-            out['result'] = 'This controller does not exist'
-            return JsonResponse(out)
-        
 
         print(f'type: {data_type}, value: {value}, timestamp: {server_time}, controller: {controller_name}')
 
@@ -81,12 +97,68 @@ def generic(request):
 
     return response
 
+# for posting data in the format of a datastring
+# "controller_name,timestamp,temperature,rh,ec,ph"
+#   0                   1       2        3  4  5
+@csrf_exempt
+def post_with_datastring(request):
+    out = {'result': 'failure'}
+    data_titles = ['timestamp', 'controller_name', 'temperature', 'humidity', 'conductivity', 'ph']
+
+
+    if request.method == 'POST':
+        try:
+            data = request.POST['datastring'].split(',')
+        except:
+            out['message'] = 'Datastring missing'
+            return JsonResponse(out)
+
+
+        if len(data) < len(data_titles):
+            out['message'] = 'Data string is too short - check whether any values are missing. Expected format is: controller_name,timestamp,temperature,rh,ec,ph'
+            return JsonResponse(out)
+
+        if not Controller.objects.filter(name=data[0]).exists():
+            out['message'] = f'The controller {data[0]} does not exist'
+            return JsonResponse(out)
+
+        controller = Controller.objects.get(name=data[0])
+        timestamp = datetime.datetime.fromtimestamp(int(data[1]))
+
+        # check if all data is in the correct format before inserting anything
+        for i in range(2, len(data_titles)):
+            try:
+                float(data[i])
+            except ValueError:
+                out['message'] = 'One of the values is not a float - check datastring format'
+                return JsonResponse(out)
+            except:
+                out['message']  = 'Unknown error at data validation step - check format of datastring'
+                return JsonResponse(out)
+
+        for i in range(2, len(data_titles)):    # start at 2 to skip timestamp and controller name
+            if data[i] != None and data[i] != 'none':
+                data_type = data_titles[i]
+                value = float(data[i])
+                DataEntry.objects.create(data_type=data_type, value = value, timestamp = timestamp, controller=controller)
+        
+        out['result'] = 'success'
+    else:
+        out['message'] = 'This endpoint can only handle POST requests'
+
+    return JsonResponse(out)
+
 @csrf_exempt
 def add_controller(request):
     out = {'result': 'failure'}
 
     if request.method == 'POST':
-        name = request.POST['name']
+        name = None 
+        try:
+            name = request.POST['name']
+        except:
+            out['message'] = 'Controller name missing'
+            return JsonResponse(out)
 
         if Controller.objects.filter(name=name).exists():
             out['message'] = 'This controller already exists'
@@ -197,17 +269,23 @@ def target_parameter(request):
     
     elif request.method == "POST":  #TODO more consistent handling of ID versus name to access controllers
         # controller_name = request.POST['controller']
+        print('abcde')
         print(request.POST)
+        target = request.POST['target']
         controller_id = request.POST['id']
+        name=request.POST['name']
+        print(f'target: {target}, id: {controller_id}, name: {name}')
 
         if Controller.objects.filter(id=controller_id).exists():
             controller = Controller.objects.get(id=controller_id)
             if Device.objects.filter(controller=controller).exists():
-                device = Device.objects.filter(controller=controller, name=request.POST['name']).first()
-                device.target = request.POST['target']
+                device = Device.objects.get(controller=controller, name=request.POST['name'])
+                print(f'device is : {device.target}')
+                device.target = target
                 device.save()
 
                 out['message'] = 'change applied'
+                out['status'] = 'success'
 
             else:
                 out['message'] = 'This controller does not have this device type'

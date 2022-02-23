@@ -1,10 +1,14 @@
-curl commands.txt
 client/.env
 client/node_modules
 client/yarn-error
 
 server/.env
 server/db.sqlite3
+server/htmlcov
+server/.coverage
 
 simplified_wiki.md
 wiki.md
+curl commands.txt
+
+arduino/test.ino
