@@ -63,17 +63,17 @@ def generic(request):
         out['results'] = []
 
         data_type = request.GET.get('sensor')
-        controller_id = int(request.GET.get('controller'))
+        controller_name = request.GET.get('controller')
         start = datetime.datetime.fromtimestamp(int(request.GET.get('start')))
         end = datetime.datetime.fromtimestamp(int(request.GET.get('end')))
 
-        print(f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_id}\n-------- End Parameters --------')
+        print(f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_name}\n-------- End Parameters --------')
 
-        if Controller.objects.filter(id=controller_id).exists() == False:
+        if Controller.objects.filter(name=controller_name).exists() == False:
             out['results'] = 'This controller does not exist'
             return JsonResponse(out)
 
-        controller = Controller.objects.get(id=controller_id)           
+        controller = Controller.objects.get(name=controller_name)           
 
         res = DataEntry.objects.filter(data_type = data_type, timestamp__range=[start, end], controller = controller)
 
@@ -137,7 +137,7 @@ def post_with_datastring(request):
                 return JsonResponse(out)
 
         for i in range(2, len(data_titles)):    # start at 2 to skip timestamp and controller name
-            if data[i] != None and data[i] != 'none':
+            if data[i] != None and data[i].lower() != 'none':
                 data_type = data_titles[i]
                 value = float(data[i])
                 DataEntry.objects.create(data_type=data_type, value = value, timestamp = timestamp, controller=controller)
