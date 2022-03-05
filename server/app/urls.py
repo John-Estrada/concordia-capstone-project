@@ -11,5 +11,7 @@ urlpatterns = [
     path('target', views.target_parameter),
     path('report_device', views.report_device),
     path('datastring', views.post_with_datastring),
+    path('csv', views.post_as_csv),
+    path('db', views.db_testing),
     path('home', views.home),
 ]

@@ -7,6 +7,8 @@ import datetime
 from django.conf import settings
 import csv
 import pprint
+import time
+from django.db import connection
 
 # Create your views here.
 def test_view(request):
@@ -345,6 +347,80 @@ def report_device(request):
 
     return JsonResponse(out)
 
+@csrf_exempt
+def post_as_csv(request):
+    # controller doesn't exist / not right format
+    start = time.time()
+    out = {'status': 'failure'}
+
+    if request.method == 'POST':
+        file = (request.FILES['data'].read().decode('utf-8'))
+
+        start_get_controller = time.time()
+        controller = Controller.objects.get(name = request.POST["controller"])
+        controller_id = controller.id
+        end_get_controller = time.time()
+        print(f'get controller: {end_get_controller - start_get_controller}')
+
+        lines = file.splitlines() 
+        print(lines)
+
+        reader = csv.reader(lines)
+        parsed = list(reader)
+
+        cursor = connection.cursor()
+        # cursor.execute("SELECT * FROM app_dataentry WHERE value>23.5 AND data_type='rh_2';")
+        data_type = 'test_type'
+        start_insert = time.time()
+        sql = f'''
+        INSERT INTO app_dataentry (data_type, value, timestamp, controller_id, device_id)
+        VALUES ('test_type', 10.0, '2022-03-01 19:56:00', 1, null);
+        '''
+        cursor.execute(sql)
+        end_insert = time.time()
+        print(f'insertion time: {end_insert - start_insert}')
+
+        # sql = '''
+        # PRAGMA table_info(app_dataentry);
+        # '''
+
+        # sql = '''
+        # SELECT * FROM app_dataentry WHERE data_type = 'test_type';
+        # '''
+        # print(cursor.fetchall())
+        queries = []
+        entries = []
+
+        for column in range(1, len(parsed[0])):
+            start_col_name = time.time()
+            column_name = parsed[0][column]
+            end_col_name = time.time()
+            print(f'col name: {end_col_name - start_col_name}')
+
+            print(f'column: {column_name}')
+            for row in parsed[1:]:
+                timestamp = datetime.datetime.fromisoformat(row[0])
+                print(f'type: {column_name}, time: {row[0]}, data: {row[column]}')
+
+                entries.append(DataEntry(data_type=column_name, value=float(row[column]), timestamp=timestamp, controller=controller))
+
+            
+        DataEntry.objects.bulk_create(entries)
+
+    end = time.time()
+    print(f'time elapsed: {end-start}')
+    return JsonResponse(out)
+
+def db_testing(request):
+    out = {'db': 'done'}
+    start = time.time()
+
+    print(DataEntry.objects.filter(controller = Controller.objects.get(id=1)))
+
+
+    end = time.time()
+    print(f"time: {end-start}")
+    return JsonResponse(out)
 
 def home(request):
     out = {'test': 'answer'}
