@@ -13,5 +13,5 @@ curl commands.txt
 
 arduino/test.ino
 
-server/app/migrations/
-server/app/__pycache__/
+server/app/migrations
+server/app/__pycache__
