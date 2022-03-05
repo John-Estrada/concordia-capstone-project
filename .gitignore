@@ -12,3 +12,6 @@ wiki.md
 curl commands.txt
 
 arduino/test.ino
+
+server/app/migrations/
+server/app/__pycache__/
