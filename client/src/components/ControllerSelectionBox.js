@@ -120,6 +120,7 @@ function ControllerSelectionBox(props) {
                 key={item.id}
                 handleClick={() => {
                   props.sendSelectedControllerToParent(item.id);
+                  props.sendNameToParent(item.name)
                   console.log(`Controller number ${item.id} selected`);
                 }}
               />

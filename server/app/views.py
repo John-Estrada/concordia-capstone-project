@@ -377,6 +377,40 @@ def post_as_csv(request):
 
     return JsonResponse(out)
 
+'''
+input : {controller: a}
+output : {data_types: [temperature, humidity, ph], controller: a}
+'''
+@csrf_exempt
+def controller_has_data(request):
+    out = {'result': 'failure'}
+
+    # handle missing parameters
+    if (request.GET.get('controller')) == None or request.GET.get('controller') == '':
+        out['message'] = 'controller name missing'
+        return JsonResponse(out)
+
+    # check if controller exists
+    if not (Controller.objects.filter(name=request.GET.get('controller')).exists()):
+        out['message'] = 'this controller does note exist'
+        return JsonResponse(out)
+
+    controller_name = Controller.objects.get(name = request.GET.get('controller')).name
+    print(f'name is {controller_name}')
+
+    # get list of data types that this controller has and return to the user
+    data_types = []
+    results = DataEntry.objects.filter(controller = Controller.objects.get(name=controller_name))
+
+    for x in results:
+        if x.data_type not in data_types:
+            data_types.append(x.data_type)
+
+    out['data_types'] = data_types
+    out['result'] = 'success'
+
+    return JsonResponse(out)
+
 def db_testing(request):
     out = {'db': 'done'}
     start = time.time()
