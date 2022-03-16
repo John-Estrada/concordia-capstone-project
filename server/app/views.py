@@ -15,7 +15,7 @@ from .util import *
 
 
 def test_view(request):
-    return JsonResponse({'test': 'answer'})
+    return JsonResponse({'test': 'if you can see this, the server is running'})
 
 # for getting and posting data from a user-defined generic sensor type
 

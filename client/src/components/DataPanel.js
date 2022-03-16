@@ -37,7 +37,7 @@ const notSelectedStyle = {
 };
 
 const DataPanel = (props) => {
-  const baseUrl = "http://localhost:8000/api/";
+  const baseUrl = `http://${process.env.REACT_APP_URL}/api/`;
   const [availableDataTypes, setAvailableDataTypes] = useState([]);
   const [selectedDataType, setSelectedDataType] = useState(null);
   const [displayString, setDisplayString] = useState([]);

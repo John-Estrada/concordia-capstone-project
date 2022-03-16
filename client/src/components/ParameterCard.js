@@ -59,7 +59,7 @@ const dateSelector = {
 };
 
 function ParameterCard(props) {
-  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/generic`; //TODO put this in its own file, change to better url
+  const baseUrl = `http://${process.env.REACT_APP_URL}/api/generic`; //TODO put this in its own file, change to better url
 
   const [max, setMax] = React.useState(-999999);
   const [avg, setAvg] = React.useState(-999999);

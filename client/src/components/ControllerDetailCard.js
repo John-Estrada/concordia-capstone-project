@@ -123,7 +123,7 @@ function ControllerDetailCard(props) {
   const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
   const [refreshTrigger, setRefreshTrigger] = React.useState(1)
 
-  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/all_targets`;
+  const baseUrl = `http://${process.env.REACT_APP_URL}/api/all_targets`;
   const params = { controller: props.controllerName };
 
   let popupWrapperStyle = {
@@ -153,7 +153,7 @@ function ControllerDetailCard(props) {
 
   const handleDeleteTarget = (targetType) => {
     console.log(targetType);
-    const requestUrl = `http://${process.env.REACT_APP_URL}:8000/api/remove_target`;
+    const requestUrl = `http://${process.env.REACT_APP_URL}/api/remove_target`;
     const requestParams = new URLSearchParams();
     requestParams.append("type", targetType);
     requestParams.append("controller", props.controllerName);

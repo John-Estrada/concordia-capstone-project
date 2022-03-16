@@ -47,7 +47,7 @@ const lowerButtonsContainer = {
 };
 
 function ControllerSelectionBox(props) {
-  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/get_available_controllers`;
+  const baseUrl = `http://${process.env.REACT_APP_URL}/api/get_available_controllers`;
 
   const [addControllerPopupOpen, setAddControllerPopupOpen] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });

@@ -30,7 +30,7 @@ function AddTargetDialog(props) {
   const [response, setResponse] = React.useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/target`;
+  const baseUrl = `http://${process.env.REACT_APP_URL}/api/target`;
 
   const handleConfirm = () => {
     const params = new URLSearchParams();
