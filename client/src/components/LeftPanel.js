@@ -13,11 +13,13 @@ function LeftPanel(props) {
         selectedController={props.selectedController}
         sendSelectedControllerToParent={props.sendSelectedControllerToParent}
         sendNameToParent = {props.sendNameToParent}
+        controllerName = {props.controllerName}
       />
       <div style={verticalSpacer}></div>
       <ControllerDetailCard
         title="Controller detail card"
         selectedController={props.selectedController}
+        controllerName = {props.controllerName}
       />
     </div>
   );

@@ -7,6 +7,11 @@ class Controller(models.Model):
     def __str__(self):
         return f'name: {self.name}'
 
+class Target(models.Model):
+    controller = models.ForeignKey(Controller, on_delete=models.CASCADE, null = True)
+    type = models.CharField(max_length=128, null = False)
+    value = models.FloatField(max_length=128, null = False)
+
 class Device(models.Model):
     id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=128)

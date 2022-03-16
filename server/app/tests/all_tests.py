@@ -2,7 +2,6 @@ from django.test import TestCase, Client
 from app.models import DataEntry, Controller, Device
 import datetime
 
-# TODO: implement these test cases
 # post data value
 # curl -X POST -F "sensor=temperature" -F "value=32.50" -F "controller=a" "http://localhost:8000/api/generic"
 # 0. all values correct

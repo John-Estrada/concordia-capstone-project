@@ -2,6 +2,8 @@ import React from "react";
 import Button from "./Button";
 import styled from "styled-components";
 import axios from "axios";
+import Ripples from "react-ripples";
+import AddTargetDialog from "./AddTargetDialog";
 
 const container = {
   width: "256px",
@@ -41,6 +43,13 @@ const targetSelectorStyle = {
   outline: "0",
   background: "transparent",
   borderBottom: "1px solid black",
+};
+
+const lowerButtonsContainer = {
+  display: "flex",
+  flexDirection: "row",
+  justifyContent: "flex-end",
+  gap: "0.75em",
 };
 
 const StyledRow = styled.div`
@@ -109,22 +118,56 @@ const Row = (props) => {
 };
 
 function ControllerDetailCard(props) {
-  const [devices, setDevices] = React.useState([]);
-  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/target`;
-  const params = { id: props.selectedController };
+  const [targets, setTargets] = React.useState([]);
+  const [addTargetDialogOpen, setAddTargetDialogOpen] = React.useState(false);
+  const [mousePos, setMousePos] = React.useState({ x: 0, y: 0 });
+  const [refreshTrigger, setRefreshTrigger] = React.useState(1)
+
+  const baseUrl = `http://${process.env.REACT_APP_URL}:8000/api/all_targets`;
+  const params = { controller: props.controllerName };
+
+  let popupWrapperStyle = {
+    position: "absolute",
+    top: `${mousePos.y + 12}px`,
+    left: `${mousePos.x + 12}px`,
+  };
+
+  const closeDialogBox = () => {
+    setAddTargetDialogOpen(false);
+    setRefreshTrigger(refreshTrigger+1)
+  };
+
+  const refreshTargets = () => {
+    axios.get(baseUrl, { params }).then((res) => {
+      let results = res.data.results;
+      let output = [];
+      for (const property in results) {
+        console.log(property);
+        console.log(results[property]);
+        // setTargets([property])
+        output.push({ property: property, target: results[property] });
+      }
+      setTargets(output);
+    });
+  };
+
+  const handleDeleteTarget = (targetType) => {
+    console.log(targetType);
+    const requestUrl = `http://${process.env.REACT_APP_URL}:8000/api/remove_target`;
+    const requestParams = new URLSearchParams();
+    requestParams.append("type", targetType);
+    requestParams.append("controller", props.controllerName);
+
+    axios.post(requestUrl, requestParams).then((res) => {
+      console.log(res);
+    });
+    setRefreshTrigger(refreshTrigger+1)
+  };
 
   React.useEffect(() => {
     if (props.selectedController === -1) return;
-    axios.get(baseUrl, { params }).then((res) => {
-      let results = [];
-      //create an array of the devices
-      res.data.devices.forEach((device) => {
-        results.push(device);
-      });
-
-      setDevices(results);
-    });
-  }, [props.selectedController]);
+    refreshTargets();
+  }, [props.selectedController, refreshTrigger],);
 
   return (
     <div>
@@ -137,20 +180,55 @@ function ControllerDetailCard(props) {
               style={titleStyle}
             >{`Controller ${props.selectedController}`}</div>
             <div style={rows}>
-              {devices.map((device) => {
+              {targets.map((target) => {
                 return (
-                  <Row
-                    rowTitle={device.name}
-                    defaultValue={device.target}
-                    selectedController={props.selectedController}
-                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "16px",
+                      justifyContent: "flex-end",
+                      alignItems: "center",
+                    }}
+                  >
+                    <div style={{ marginLeft: "0px", marginRight: "auto" }}>
+                      {target.property}
+                    </div>
+                    <div>{target.target}</div>
+                    <Button
+                      text="remove"
+                      icon="cancel"
+                      handleClick={() => {
+                        console.log("clicked");
+                        handleDeleteTarget(target.property);
+                      }}
+                    ></Button>
+                  </div>
                 );
               })}
-              {/* <Row rowTitle="Temperature" defaultValue={22.2}></Row>
-              <Row rowTitle="Humidity"></Row>
-              <Row rowTitle="pH"></Row>
-              <Row rowTitle="Conductivity"></Row>
-              <Row rowTitle="Lights"></Row> */}
+            </div>
+            <div style={lowerButtonsContainer}>
+              <Ripples during={500} color="#fff" onClick={refreshTargets}>
+                <Button text="refresh" icon="refresh"></Button>
+              </Ripples>
+              <Ripples
+                during={500}
+                color="#fff"
+                onClick={(e) => {
+                  setAddTargetDialogOpen(true);
+                  setMousePos({ x: e.pageX, y: e.pageY });
+                }}
+              >
+                <Button text="add" icon="add"></Button>
+              </Ripples>
+              {addTargetDialogOpen ? (
+                <div style={popupWrapperStyle}>
+                  <AddTargetDialog
+                    handleCancel={closeDialogBox}
+                    controllerName={props.controllerName}
+                    handleRefresh={refreshTargets}
+                  ></AddTargetDialog>
+                </div>
+              ) : null}
             </div>
           </>
         )}

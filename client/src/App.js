@@ -18,7 +18,7 @@ const container = {
 };
 
 function App() {
-  const [selectedController, setSelectedController] = useState(-1); //TODO use name instead of id, randomize new controller id
+  const [selectedController, setSelectedController] = useState(-1); 
   const [controllerName, setControllerName] = useState(
     "No Controller Selected"
   );
@@ -39,6 +39,7 @@ function App() {
           selectedController={selectedController}
           sendSelectedControllerToParent={sendSelectedControllerToParent}
           sendNameToParent={sendNameToParent}
+          controllerName = {controllerName}
         />
         <RightPanel
           title={
