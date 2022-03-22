@@ -90,7 +90,7 @@ const TimeSelectPanel = (props) => {
   };
 
   const handleDownloadCsv = () => {
-    console.log('download')
+    console.log("download");
     if (!props.controllerName) return;
     let now = new Date();
     let begin = new Date();
@@ -121,14 +121,8 @@ const TimeSelectPanel = (props) => {
         break;
     }
 
-    const requestUrl = `http://${process.env.REACT_APP_URL}/api/get_data_as_csv`;
-    const params = new URLSearchParams();
-    params.append("controller", props.controllerName);
-    params.append("sensor", props.selectedDataType);
-    params.append("start", Math.round(begin.getTime() / 1000));
-    params.append("end", Math.round(now.getTime() / 1000));
-
-    axios.get(requestUrl, { params });
+    const requestUrl = `http://${process.env.REACT_APP_URL}/api/get_data_as_csv?controller=${props.controllerName}&sensor=${props.selectedDataType}&start=${Math.round(begin.getTime() / 1000)}&end=${Math.round(now.getTime() / 1000)}`;
+    window.open(requestUrl)
   };
 
   React.useEffect(() => {

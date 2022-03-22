@@ -253,9 +253,8 @@ def get_data_as_csv(request):
 
     writer = csv.writer(response)
 
-    writer.writerow(['Type', 'temp'])
+    writer.writerow(['Type', data_type])
     writer.writerow(['Controller', controller_name])
-    writer.writerow(['controller_name', 'temp_name'])
     writer.writerow('')
     writer.writerow(['timestamp', 'value'])
 
