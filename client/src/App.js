@@ -45,7 +45,7 @@ function App() {
           title={
             selectedController === -1
               ? "No Controller Selected"
-              : "Controller " + selectedController
+              : "Controller: " + controllerName
           }
           selectedController={selectedController}
           controllername={controllerName}

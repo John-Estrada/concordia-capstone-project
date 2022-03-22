@@ -2,6 +2,7 @@ from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
+from pytz import timezone
 from .models import *
 import datetime
 from django.conf import settings
@@ -28,7 +29,7 @@ def generic(request):
     # arduino uses this to send data to the server
     if request.method == 'POST':
         print(request.POST)
-        server_time = datetime.datetime.now()
+        server_time = datetime.datetime.now() - datetime.timedelta(hours=4)
 
         expected_parameters = ['sensor', 'value', 'controller']
         for param in expected_parameters:
@@ -110,11 +111,15 @@ def generic(request):
 # for posting data in the format of a datastring
 # "controller_name,timestamp,temperature,rh,ec,ph"
 #   0                   1       2        3  4  5
+# timestamp,temp1,temp2,temp3,temp4,rh1,rh2,rh3,rh4,efftemp,effec,turbidity
 
 
 @csrf_exempt
 def post_with_datastring(request):
     out = {'result': 'failure'}
+
+    expected_format = ['timestamp']
+
     data_titles = ['timestamp', 'controller_name',
                    'temperature', 'humidity', 'conductivity', 'ph']
 
@@ -224,18 +229,18 @@ def get_data_as_csv(request):
     out = {'result': 'failure'}
 
     data_type = request.GET.get('sensor')
-    controller_id = int(request.GET.get('controller'))
+    controller_name = request.GET.get('controller')
     start = datetime.datetime.fromtimestamp(int(request.GET.get('start')))
     end = datetime.datetime.fromtimestamp(int(request.GET.get('end')))
 
     print(
-        f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_id}\n-------- End Parameters --------')
+        f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_name}\n-------- End Parameters --------')
 
-    if Controller.objects.filter(id=controller_id).exists() == False:
+    if Controller.objects.filter(name=controller_name).exists() == False:
         out['results'] = 'This controller does not exist'
         return JsonResponse(out)
 
-    controller = Controller.objects.get(id=controller_id)
+    controller = Controller.objects.get(name=controller_name)
 
     res = DataEntry.objects.filter(data_type=data_type, timestamp__range=[
                                    start, end], controller=controller)
@@ -249,7 +254,7 @@ def get_data_as_csv(request):
     writer = csv.writer(response)
 
     writer.writerow(['Type', 'temp'])
-    writer.writerow(['Controller_id', 1])
+    writer.writerow(['Controller', controller_name])
     writer.writerow(['controller_name', 'temp_name'])
     writer.writerow('')
     writer.writerow(['timestamp', 'value'])
@@ -286,18 +291,18 @@ def target_parameter(request):
         if not Controller.objects.filter(name=controller_name).exists():
             out['message'] = 'controller does not exist'
             return JsonResponse(out)
-    
+
         controller = Controller.objects.get(name=controller_name)
 
-        if not Target.objects.filter(controller = controller, type = type).exists():
+        if not Target.objects.filter(controller=controller, type=type).exists():
             out['message'] = 'no target set'
             return JsonResponse(out)
 
-        target_value = Target.objects.get(controller = controller, type=type).value
+        target_value = Target.objects.get(
+            controller=controller, type=type).value
 
         out['status'] = 'success'
         out['target'] = target_value
-
 
         print('get')
 
@@ -345,20 +350,22 @@ def target_parameter(request):
 
     return response
 
+
 @csrf_exempt
 def remove_target(request):
     out = {'status': 'failed'}
     if request.method == 'POST':
         type = request.POST['type']
         controller_name = request.POST['controller']
-        controller = Controller.objects.get(name = controller_name)
+        controller = Controller.objects.get(name=controller_name)
 
-        Target.objects.filter(controller = controller, type = type).delete()
+        Target.objects.filter(controller=controller, type=type).delete()
 
         out['status'] = 'success'
         return JsonResponse(out)
 
     return JsonResponse(out)
+
 
 @csrf_exempt
 def all_targets(request):
@@ -367,16 +374,16 @@ def all_targets(request):
     params_status = validate_params_missing(['controller'], request.GET)
     print(params_status)
     if (params_status['message'] != 'normal'):
-        out['message']='controller name missing'
+        out['message'] = 'controller name missing'
         return JsonResponse(out)
 
-    if not Controller.objects.filter(name = request.GET.get('controller')).exists():
+    if not Controller.objects.filter(name=request.GET.get('controller')).exists():
         out['message'] = 'this controller does not exist'
         return JsonResponse(out)
 
-    controller = Controller.objects.get(name = request.GET.get('controller'))
+    controller = Controller.objects.get(name=request.GET.get('controller'))
 
-    targets = Target.objects.filter(controller = controller)
+    targets = Target.objects.filter(controller=controller)
 
     targets_dict = {}
     for x in targets:
@@ -386,6 +393,7 @@ def all_targets(request):
     out['status'] = 'success'
 
     return JsonResponse(out)
+
 
 # For arduino to report available devices to the server
 '''
@@ -461,6 +469,8 @@ def post_as_csv(request):
                     row[column]), timestamp=timestamp, controller=controller))
 
         DataEntry.objects.bulk_create(entries)
+
+    out['status'] = 'success'
 
     return JsonResponse(out)
 

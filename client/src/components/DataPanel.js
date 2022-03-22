@@ -1,12 +1,17 @@
 import React, { useEffect } from "react";
 import { useState, useRef } from "react";
+import TimeSelectPanel from "./TimeSelectPanel";
 
 const wrapperStyle = {
   border: "1px solid black",
   minWidth: "35em",
+  maxWidth: "50vw",
   padding: "1em",
+  margin: "0.5em",
   display: "flex",
-  justifyContent: "space-around",
+  justifyContent: "center",
+  flexWrap: "wrap",
+  gap: '0.125em'
 };
 const outer = {};
 
@@ -14,6 +19,7 @@ const resultsStyle = {
   marginTop: "1em",
   display: "flex",
   flexDirection: "column",
+  overflow: "scroll",
 };
 
 const selectorButtonStyle = {
@@ -23,26 +29,27 @@ const selectorButtonStyle = {
 };
 
 const selectedStyle = {
-  border: '1px solid black',
+  border: "1px solid black",
   backgroundColor: "white",
   color: "black",
   borderRadius: "6px",
 };
 
 const notSelectedStyle = {
-  border: '1px solid black',
+  border: "1px solid black",
   backgroundColor: "black",
   color: "white",
-  borderRadius: '6px'
+  borderRadius: "6px",
+};
+
+const timeAndDataWrapper = {
+  display: "flex",
 };
 
 const DataPanel = (props) => {
   const baseUrl = `http://${process.env.REACT_APP_URL}/api/`;
   const [availableDataTypes, setAvailableDataTypes] = useState([]);
   const [selectedDataType, setSelectedDataType] = useState(null);
-  const [displayString, setDisplayString] = useState([]);
-
-  const resultsGoHere = useRef(null);
 
   const selectType = (e) => {
     console.log(e.target.innerHTML);
@@ -61,59 +68,6 @@ const DataPanel = (props) => {
         }
       });
   }, [props.controllerName]);
-
-  useEffect(() => {
-    if (selectedDataType == null) return;
-
-    let requestUrl =
-      baseUrl +
-      `generic?controller=${
-        props.controllerName
-      }&sensor=${selectedDataType}&start=111&end=${Math.round(
-        new Date().getTime() / 1000
-      )}`;
-    console.log(requestUrl);
-    fetch(requestUrl)
-      .then((res) => res.json())
-      .then((res) => {
-        console.log(res.results);
-        let dataMap = new Map();
-        res.results.forEach((result) => {
-          let date = result[0].split("T")[0];
-          let time = result[0].split("T")[1];
-          let value = result[1];
-
-          console.log(`date: ${date}, time: ${time}, value: ${value}`);
-          if (!dataMap.has(date)) {
-            dataMap.set(date, []);
-          }
-
-          dataMap.get(date).push({ time, value });
-        });
-        resultsGoHere.current.innerHTML = "";
-
-        dataMap.forEach((value, key) => {
-          let day = document.createElement("div");
-          let text = document.createTextNode(key);
-
-          day.appendChild(text);
-          resultsGoHere.current.appendChild(day);
-
-          value.forEach((v) => {
-            let time = v.time;
-            let dataEntry = v.value;
-            let line = document.createElement("div");
-            let t = document.createTextNode(`${time.split('.')[0]} - ${dataEntry}`);
-            line.appendChild(t);
-
-            resultsGoHere.current.appendChild(line);
-          });
-
-          let lineBreak = document.createElement("br");
-          resultsGoHere.current.appendChild(lineBreak);
-        });
-      });
-  }, [selectedDataType, props.controllerName]);
 
   return (
     <div style={outer}>
@@ -136,7 +90,21 @@ const DataPanel = (props) => {
           })
         )}
       </div>
-      <div style={resultsStyle} ref={resultsGoHere}></div>
+      <div style={timeAndDataWrapper}>
+        <TimeSelectPanel
+          controllerName={props.controllerName}
+          selectedDataType={selectedDataType}
+        ></TimeSelectPanel>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            flex: "1",
+            justifyContent: "center",
+          }}
+        >
+        </div>
+      </div>
     </div>
   );
 };

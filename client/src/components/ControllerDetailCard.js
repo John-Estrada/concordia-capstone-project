@@ -178,7 +178,7 @@ function ControllerDetailCard(props) {
           <>
             <div
               style={titleStyle}
-            >{`Controller ${props.selectedController}`}</div>
+            >{`Set Targets: ${props.controllerName}`}</div>
             <div style={rows}>
               {targets.map((target) => {
                 return (
