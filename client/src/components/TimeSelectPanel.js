@@ -163,7 +163,7 @@ const TimeSelectPanel = (props) => {
             style={{ marginTop: "0.25em" }}
             onClick={handleDownloadCsv}
           >
-            <Button text="download"></Button>
+            <Button text="download" icon="csv"></Button>
           </Ripples>
           <Ripples
             color="#fff"
@@ -179,7 +179,7 @@ const TimeSelectPanel = (props) => {
         <div>
           {props.controllerName} | {selectedTime} | {props.selectedDataType}
         </div>
-        <div>
+        <div style = {{overflow: 'scroll'}}>
           {results.length > 0 ? null : "No Results Found"}{" "}
           {results.map((result) => {
             return <div>{result.replace("T", " ").replace("Z", " ")}</div>;

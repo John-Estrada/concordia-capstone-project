@@ -11,8 +11,9 @@ import { BiTime } from "react-icons/bi";
 import { FiEdit } from "react-icons/fi";
 import { GiCancel } from "react-icons/gi";
 import { AiOutlineCheck } from "react-icons/ai";
-import { FaCheck } from "react-icons/fa";
+import { FaCheck, FaFileCsv } from "react-icons/fa";
 import styled, { keyframes } from "styled-components";
+
 
 const iconStyle = {
   fontSize: "18px",
@@ -66,6 +67,9 @@ function Button(props) {
       break;
     case "confirm":
       icon = <FaCheck />;
+      break;
+    case "csv":
+      icon = <FaFileCsv />
       break;
     default:
       icon = <BsQuestionCircleFill></BsQuestionCircleFill>;
