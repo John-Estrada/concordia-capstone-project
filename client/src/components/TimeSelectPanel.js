@@ -82,7 +82,9 @@ const TimeSelectPanel = (props) => {
 
         let output = [];
         res.data.results.forEach((result) => {
-          output.push(`${result[0]} - ${result[1]}`);
+          let date = result[0].split('.')[0]
+          let value = result[1]
+          output.push(`${date} - ${value}`);
         });
         setResults(output);
       })

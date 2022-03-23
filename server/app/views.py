@@ -1,8 +1,9 @@
+from os import times
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
-from pytz import timezone
+import pytz
 from .models import *
 import datetime
 from django.conf import settings
@@ -29,7 +30,7 @@ def generic(request):
     # arduino uses this to send data to the server
     if request.method == 'POST':
         print(request.POST)
-        server_time = datetime.datetime.now() - datetime.timedelta(hours=4)
+        server_time = datetime.datetime.now(pytz.timezone('US/Eastern'))
 
         expected_parameters = ['sensor', 'value', 'controller']
         for param in expected_parameters:
@@ -72,8 +73,8 @@ def generic(request):
 
         data_type = request.GET.get('sensor')
         controller_name = request.GET.get('controller')
-        start = datetime.datetime.fromtimestamp(int(request.GET.get('start')))
-        end = datetime.datetime.fromtimestamp(int(request.GET.get('end')))
+        start = datetime.datetime.fromtimestamp(int(request.GET.get('start')), pytz.timezone('US/Eastern'))
+        end = datetime.datetime.fromtimestamp(int(request.GET.get('end')), pytz.timezone('US/Eastern'))
 
         print(
             f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_name}\n-------- End Parameters --------')
@@ -94,8 +95,8 @@ def generic(request):
 
         for x in res:
             out['results'].append(
-                [x.timestamp, round(x.value, settings.DATA_DECIMAL_PLACES)])
-            print(f'{x.timestamp}, value: {x.value}')
+                [str(x.timestamp.astimezone(pytz.timezone("US/Eastern")))[0:-6], round(x.value, 2)])
+            print(f'{str(x.timestamp.astimezone(pytz.timezone("US/Eastern")))[0:-6]}, value: {x.value}')
 
         print(f'-------- End Results --------')
 
@@ -113,56 +114,78 @@ def generic(request):
 #   0                   1       2        3  4  5
 # timestamp,temp1,temp2,temp3,temp4,rh1,rh2,rh3,rh4,efftemp,effec,turbidity
 
+# timestamp,air_temp_1,air_temp_2,air_temp_3,air_temp_4,air_rh_1,air_rh_2,air_rh_3,air_rh_4,effluent_temp,effluent_ec25,effluent_ph,effluent_turb_ntu,status,elapsed time
+# status is a string of 8 characters:
+# //bit 0: bottom tank level (FULL=1)
+# //bit 1: top tank level (FULL=1)
+# //bit 2: pump (ON=1)
+# //bit 3: peltier (ON=1)
+# //bit 4: vent (ON=1)
+# //bit 5: reserved for future use
+# //bit 6: reserved for future use
+# //bit 7: reserved, always 1 for printing purposes
+# Where "bit 7" IS THE LEFTMOST (first) character
+
 
 @csrf_exempt
 def post_with_datastring(request):
     out = {'result': 'failure'}
 
-    expected_format = ['timestamp']
+    print(f'post by datastring')
+    print(f'datastring: {request.POST["datastring"]}')
 
-    data_titles = ['timestamp', 'controller_name',
-                   'temperature', 'humidity', 'conductivity', 'ph']
+    expected_format = 'timestamp,air_temp_1,air_temp_2,air_temp_3,air_temp_4,air_rh_1,air_rh_2,air_rh_3,air_rh_4,effluent_temp,effluent_ec25,effluent_ph,effluent_turb_ntu,status,elapsed_time'.split(
+        ',')
+
+    status_titles = ['format', 'reserved', 'reserved', 'vent', 'peltier', 'pump', 'top_tank', 'bottom_tank']
+    
 
     if request.method == 'POST':
         try:
-            data = request.POST['datastring'].split(',')
+            values = request.POST['datastring'].split(',')
         except:
-            out['message'] = 'Datastring missing'
+            out['message'] = 'datastring missing'
             return JsonResponse(out)
 
-        if len(data) < len(data_titles):
-            out['message'] = 'Data string is too short - check whether any values are missing. Expected format is: controller_name,timestamp,temperature,rh,ec,ph'
+        if len(values) < len(expected_format):
+            print(len(values))
+            print(len(expected_format))
+            out['message'] = 'datastring too short - check for missing values'
+            return JsonResponse(out)
+        
+        if len(values) > len(expected_format):
+            print(len(values))
+            print(len(expected_format))
+            print(expected_format[len(expected_format)-1])
+            print(values[len(values)-1])
+            out['message'] = 'datastring too long - check for extra values'
             return JsonResponse(out)
 
-        if not Controller.objects.filter(name=data[0]).exists():
-            out['message'] = f'The controller {data[0]} does not exist'
+        controller = get_controller_or_none(request)
+        if controller == None:
+            out['message'] = 'this controller does not exist'
             return JsonResponse(out)
+        
+        timestamp = datetime.datetime.fromtimestamp(int(values[0]))
+        
+        print(timestamp.astimezone(pytz.timezone('Canada/Eastern')))
 
-        controller = Controller.objects.get(name=data[0])
-        timestamp = datetime.datetime.fromtimestamp(int(data[1]))
+        data_to_add = []
 
-        # check if all data is in the correct format before inserting anything
-        for i in range(2, len(data_titles)):
-            try:
-                float(data[i])
-            except ValueError:
-                out['message'] = 'One of the values is not a float - check datastring format'
-                return JsonResponse(out)
-            except:
-                out['message'] = 'Unknown error at data validation step - check format of datastring'
-                return JsonResponse(out)
+        for x in range(1, len(expected_format)-2):
+            # print(f'title: {expected_format[x]}, value: {values[x]}')
+            data_to_add.append(DataEntry(timestamp = timestamp, value = float(values[x]), controller=controller, data_type=expected_format[x]))
 
-        # start at 2 to skip timestamp and controller name
-        for i in range(2, len(data_titles)):
-            if data[i] != None and data[i].lower() != 'none':
-                data_type = data_titles[i]
-                value = float(data[i])
-                DataEntry.objects.create(
-                    data_type=data_type, value=value, timestamp=timestamp, controller=controller)
+        status = values[len(expected_format)-2]
+        for x in range(3, len(status)):
+            # print(f'{status_titles[x]}, {status[x]}')
+            data_to_add.append(DataEntry(timestamp=timestamp, value=float(status[x]), controller=controller, data_type=status_titles[x]))
 
-        out['result'] = 'success'
-    else:
-        out['message'] = 'This endpoint can only handle POST requests'
+
+        for x in data_to_add:
+            print(f'{x.value}, {x.data_type}')
+
+        DataEntry.objects.bulk_create(data_to_add)
 
     return JsonResponse(out)
 

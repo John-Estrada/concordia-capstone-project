@@ -1,3 +1,6 @@
+from django.http import JsonResponse
+from .models import Controller
+
 def validate_params_missing(expected_parameters, actual_parameters):
     out = {}
     missing = []
@@ -12,3 +15,12 @@ def validate_params_missing(expected_parameters, actual_parameters):
         out['message'] = 'normal'
 
     return out
+
+def get_controller_or_none(request):
+    name = request.POST['controller']
+    if not Controller.objects.filter(name=name).exists():
+        return None 
+        
+    controller = Controller.objects.get(name=name)
+
+    return controller
