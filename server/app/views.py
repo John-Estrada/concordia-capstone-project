@@ -166,7 +166,7 @@ def post_with_datastring(request):
             out['message'] = 'this controller does not exist'
             return JsonResponse(out)
         
-        timestamp = datetime.datetime.fromisoformat(int(values[0]))
+        timestamp = datetime.datetime.fromtimestamp(int(values[0]))
         
         print(timestamp.astimezone(pytz.timezone('Canada/Eastern')))
 
