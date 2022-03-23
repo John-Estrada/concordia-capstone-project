@@ -30,7 +30,7 @@ def generic(request):
     # arduino uses this to send data to the server
     if request.method == 'POST':
         print(request.POST)
-        server_time = datetime.datetime.now(pytz.timezone('US/Eastern'))
+        server_time = datetime.datetime.utcnow()
 
         expected_parameters = ['sensor', 'value', 'controller']
         for param in expected_parameters:
@@ -95,8 +95,8 @@ def generic(request):
 
         for x in res:
             out['results'].append(
-                [str(x.timestamp)[0:-6], round(x.value, 2)])
-            print(f'{str(x.timestamp)[0:-6]}, value: {x.value}')
+                [str(x.timestamp.astimezone(pytz.timezone('Canada/Eastern')))[0:-6], round(x.value, 2)])
+            print(out['results'])
 
         print(f'-------- End Results --------')
 
