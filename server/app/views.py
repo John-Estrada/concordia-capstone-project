@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.http import JsonResponse, QueryDict
 from django.views.decorators.csrf import csrf_exempt
 import pytz
+from pytz import timezone
 from .models import *
 import datetime
 from django.conf import settings
@@ -95,7 +96,7 @@ def generic(request):
 
         for x in res:
             out['results'].append(
-                [str(x.timestamp.astimezone(pytz.timezone('Canada/Eastern')))[0:-6], round(x.value, 2)])
+                [str(x.timestamp)[0:-6], round(x.value, 2)])
             print(out['results'])
 
         print(f'-------- End Results --------')
@@ -166,7 +167,7 @@ def post_with_datastring(request):
             out['message'] = 'this controller does not exist'
             return JsonResponse(out)
         
-        timestamp = datetime.datetime.fromisoformat((values[0]))
+        timestamp = datetime.datetime.fromisoformat((values[0])).astimezone(pytz.timezone('UTC'))
         
         print(timestamp)
 
