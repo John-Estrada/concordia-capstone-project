@@ -73,8 +73,8 @@ def generic(request):
 
         data_type = request.GET.get('sensor')
         controller_name = request.GET.get('controller')
-        start = datetime.datetime.fromtimestamp(int(request.GET.get('start')), pytz.timezone('US/Eastern'))
-        end = datetime.datetime.fromtimestamp(int(request.GET.get('end')), pytz.timezone('US/Eastern'))
+        start = datetime.datetime.fromtimestamp(int(request.GET.get('start')))
+        end = datetime.datetime.fromtimestamp(int(request.GET.get('end')))
 
         print(
             f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_name}\n-------- End Parameters --------')
@@ -95,8 +95,8 @@ def generic(request):
 
         for x in res:
             out['results'].append(
-                [str(x.timestamp.astimezone(pytz.timezone("US/Eastern")))[0:-6], round(x.value, 2)])
-            print(f'{str(x.timestamp.astimezone(pytz.timezone("US/Eastern")))[0:-6]}, value: {x.value}')
+                [str(x.timestamp)[0:-6], round(x.value, 2)])
+            print(f'{str(x.timestamp)[0:-6]}, value: {x.value}')
 
         print(f'-------- End Results --------')
 
@@ -166,9 +166,9 @@ def post_with_datastring(request):
             out['message'] = 'this controller does not exist'
             return JsonResponse(out)
         
-        timestamp = datetime.datetime.fromtimestamp(int(values[0]))
+        timestamp = datetime.datetime.fromisoformat((values[0]))
         
-        print(timestamp.astimezone(pytz.timezone('Canada/Eastern')))
+        print(timestamp)
 
         data_to_add = []
 
