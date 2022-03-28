@@ -10,6 +10,7 @@ import TestParent from "./components/TestParent";
 import { useState, useRef } from "react";
 import AddControllerDialogBox from "./components/AddControllerDialogBox";
 import TestChild from "./components/TestChild";
+import TimeTest from "./components/TimeTest";
 
 const container = {
   display: "flex",

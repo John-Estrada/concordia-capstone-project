@@ -17,7 +17,11 @@ def validate_params_missing(expected_parameters, actual_parameters):
     return out
 
 def get_controller_or_none(request):
-    name = request.POST['controller']
+    try:
+        name = request.POST['controller']
+    except:
+        name = request.GET['controller']
+
     if not Controller.objects.filter(name=name).exists():
         return None 
         

@@ -1,4 +1,5 @@
 from os import times
+from xml.dom.pulldom import END_DOCUMENT
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.http import JsonResponse, QueryDict
@@ -31,7 +32,7 @@ def generic(request):
     # arduino uses this to send data to the server
     if request.method == 'POST':
         print(request.POST)
-        server_time = datetime.datetime.utcnow()
+        server_time = datetime.datetime.now()
 
         expected_parameters = ['sensor', 'value', 'controller']
         for param in expected_parameters:
@@ -96,7 +97,7 @@ def generic(request):
 
         for x in res:
             out['results'].append(
-                [str(x.timestamp)[0:-6], round(x.value, 2)])
+                [int(x.timestamp.timestamp()), round(x.value, 2)])
             print(out['results'])
 
         print(f'-------- End Results --------')
@@ -549,6 +550,151 @@ def db_testing(request):
     print(f"time: {end-start}")
     return JsonResponse(out)
 
+@csrf_exempt
+def hourly_average(request):
+    out = {'status': 'failed'}
+
+    # input - data_type, controller, start, end
+    # validate times and controller
+    # create a list of timestamps within the time range
+    # get average for each hour
+
+    data_type = request.GET.get('data_type')
+    start = int(request.GET.get('start'))
+    end = int(request.GET.get('end'))
+    controller = get_controller_or_none(request)
+    if controller == None:
+        out['results'] = 'This controller does not exist'
+        return JsonResponse(out)
+
+    start_timestamp = datetime.datetime.fromtimestamp(start)
+    end_timestamp = datetime.datetime.fromtimestamp(end)
+
+    start_timestamp = start_timestamp.replace(minute=0).replace(second=0)
+    end_timestamp = end_timestamp.replace(minute=0).replace(second=0)
+
+    averages = []
+    print('x')
+
+    while(start_timestamp < end_timestamp):
+        print(start_timestamp)
+        hourly_data = DataEntry.objects.filter(controller=controller, data_type = data_type, timestamp__hour = start_timestamp.hour, timestamp__day = start_timestamp.day)
+        count = 0
+        total = 0
+        for x in hourly_data:
+            total += x.value
+            count+=1
+            print(f'hourly : {x}')
+
+        if count > 0:
+            avg = total/count
+        else:
+            avg = 0
+            
+        averages.append((start_timestamp.timestamp(), avg))
+        
+        start_timestamp = start_timestamp + datetime.timedelta(hours=1)
+
+
+    out['averages'] = averages 
+    out['data_type'] = data_type
+    out['controller'] = controller.name
+    out['date_hour'] = start
+    out['status'] = 'success'
+
+    print('a')
+    # print(averages)
+
+    return JsonResponse(out)
+
+def get_averages_as_csv(request):
+    out = {'status': 'failed'}
+
+    data_type = request.GET.get('data_type')
+    start = int(request.GET.get('start'))
+    end = int(request.GET.get('end'))
+    controller = get_controller_or_none(request)
+    if controller == None:
+        out['results'] = 'This controller does not exist'
+        return JsonResponse(out)
+
+    start_timestamp = datetime.datetime.fromtimestamp(start)
+    end_timestamp = datetime.datetime.fromtimestamp(end)
+
+    start_timestamp = start_timestamp.replace(minute=0).replace(second=0)
+    end_timestamp = end_timestamp.replace(minute=0).replace(second=0)
+
+    averages = []
+    print('x')
+
+    while(start_timestamp < end_timestamp):
+        print(start_timestamp)
+        hourly_data = DataEntry.objects.filter(controller=controller, data_type = data_type, timestamp__hour = start_timestamp.hour)
+        count = 0
+        total = 0
+        for x in hourly_data:
+            total += x.value
+            count+=1
+            print(f'hourly : {x}')
+
+        if count > 0:
+            avg = total/count
+        else:
+            avg = 0
+            
+        averages.append((start_timestamp.timestamp(), avg))
+        
+        start_timestamp = start_timestamp + datetime.timedelta(hours=1)
+
+    response = HttpResponse(
+        content_type='text/csv',
+    )
+
+    response['Content-Disposition'] = 'attachment; filename="data.csv"'
+
+    writer = csv.writer(response)
+
+    writer.writerow(['Type', data_type])
+    writer.writerow(['Controller', controller.name])
+    writer.writerow('')
+    writer.writerow(['timestamp', 'value'])
+
+    for x in averages:
+        writer.writerow([datetime.datetime.fromtimestamp(x[0]).strftime("%Y-%m-%d %H:%m:%S"), x[1]])
+
+    return response
+
+def control_system_activity(request):
+    out = {'status': 'failed'}
+
+    # expected input : controller, data_type, 
+    # validate controller and data type
+    # return all points where status is 1.0 (on)
+
+    valid_data_types = ['vent', 'peltier', 'pump', 'bottom_tank', 'top_tank']
+
+    controller = get_controller_or_none(request)
+    if controller == None:
+        out['message'] = 'this controller does not exist'
+        return JsonResponse(out)
+
+    data_type = request.GET.get('data_type')
+
+    if data_type not in valid_data_types:
+        out['message'] = 'this is not a valid data type for this request'
+        return JsonResponse(out)
+
+    results = DataEntry.objects.filter(data_type = data_type, controller = controller).exclude(value=0.0)
+
+    output = []
+    for x in results:
+        output.append([x.timestamp.timestamp(), x.value])
+
+    out['results'] = output 
+    out['controller'] = controller.name
+    out['data_type'] = data_type
+
+    return JsonResponse(out)
 
 def home(request):
     out = {'test': 'answer'}

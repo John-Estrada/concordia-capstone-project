@@ -17,4 +17,7 @@ urlpatterns = [
     path('controller_has_data', views.controller_has_data),
     path('db', views.db_testing),
     path('home', views.home),
+    path('hourly_average', views.hourly_average),
+    path('get_averages_as_csv', views.get_averages_as_csv),
+    path('control_systems_activity', views.control_system_activity),
 ]
