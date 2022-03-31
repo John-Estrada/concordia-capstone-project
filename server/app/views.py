@@ -1,27 +1,20 @@
-from os import times
-from xml.dom.pulldom import END_DOCUMENT
+
 from django.http.response import HttpResponse
 from django.shortcuts import render
-from django.http import JsonResponse, QueryDict
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import pytz
 from pytz import timezone
 from .models import *
 import datetime
-from django.conf import settings
 import csv
 import pprint
 import time
-from django.db import connection
 from .util import *
-
-# Create your views here.
 
 
 def test_view(request):
     return JsonResponse({'test': 'if you can see this, the server is running'})
-
-# for getting and posting data from a user-defined generic sensor type
 
 
 @csrf_exempt
@@ -48,20 +41,17 @@ def generic(request):
 
         data_type = request.POST['sensor']
         value = float(request.POST['value'])
-        controller_name = request.POST['controller']  # name
-        print(f'NAME: {Controller.objects.all()}')
 
-        try:
-            controller = Controller.objects.get(name=controller_name)
-        except Controller.DoesNotExist:
-            out['message'] = 'The specified controller does not exist'
+        controller = get_controller_or_none(request)
+        if controller == None:
+            out['message'] = 'this controller does not exist'
             return JsonResponse(out)
 
         print(
             f"Controller found: id: {controller.id}, name: {controller.name}")
 
         print(
-            f'type: {data_type}, value: {value}, timestamp: {server_time}, controller: {controller_name}')
+            f'type: {data_type}, value: {value}, timestamp: {server_time}, controller: {controller.name}')
 
         x = DataEntry.objects.create(
             data_type=data_type, value=value, timestamp=server_time, controller=controller)
@@ -74,18 +64,21 @@ def generic(request):
         out['results'] = []
 
         data_type = request.GET.get('sensor')
-        controller_name = request.GET.get('controller')
         start = datetime.datetime.fromtimestamp(int(request.GET.get('start')))
         end = datetime.datetime.fromtimestamp(int(request.GET.get('end')))
+        controller = get_controller_or_none(request)
 
         print(
-            f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_name}\n-------- End Parameters --------')
+            (f'-------- Parameters --------'
+            f'data_type: {data_type}'
+            f'start: {start}'
+            f'end: {end}'
+            f'controller: {controller.name}'
+            '-------- End Parameters --------'))
 
-        if Controller.objects.filter(name=controller_name).exists() == False:
-            out['results'] = 'This controller does not exist'
+        if controller == None:
+            out['message'] = 'this controller does not exist'
             return JsonResponse(out)
-
-        controller = Controller.objects.get(name=controller_name)
 
         res = DataEntry.objects.filter(data_type=data_type, timestamp__range=[
                                        start, end], controller=controller)
@@ -139,8 +132,8 @@ def post_with_datastring(request):
     expected_format = 'timestamp,air_temp_1,air_temp_2,air_temp_3,air_temp_4,air_rh_1,air_rh_2,air_rh_3,air_rh_4,effluent_temp,effluent_ec25,effluent_ph,effluent_turb_ntu,status,elapsed_time'.split(
         ',')
 
-    status_titles = ['format', 'reserved', 'reserved', 'vent', 'peltier', 'pump', 'top_tank', 'bottom_tank']
-    
+    status_titles = ['format', 'reserved', 'reserved',
+                     'vent', 'peltier', 'pump', 'top_tank', 'bottom_tank']
 
     if request.method == 'POST':
         try:
@@ -154,7 +147,7 @@ def post_with_datastring(request):
             print(len(expected_format))
             out['message'] = 'datastring too short - check for missing values'
             return JsonResponse(out)
-        
+
         if len(values) > len(expected_format):
             print(len(values))
             print(len(expected_format))
@@ -167,22 +160,23 @@ def post_with_datastring(request):
         if controller == None:
             out['message'] = 'this controller does not exist'
             return JsonResponse(out)
-        
-        timestamp = datetime.datetime.fromisoformat((values[0])).astimezone(pytz.timezone('UTC'))
-        
+
+        timestamp = datetime.datetime.fromtimestamp(int(values[0]))
+
         print(timestamp)
 
         data_to_add = []
 
         for x in range(1, len(expected_format)-2):
             # print(f'title: {expected_format[x]}, value: {values[x]}')
-            data_to_add.append(DataEntry(timestamp = timestamp, value = float(values[x]), controller=controller, data_type=expected_format[x]))
+            data_to_add.append(DataEntry(timestamp=timestamp, value=float(
+                values[x]), controller=controller, data_type=expected_format[x]))
 
         status = values[len(expected_format)-2]
         for x in range(3, len(status)):
             # print(f'{status_titles[x]}, {status[x]}')
-            data_to_add.append(DataEntry(timestamp=timestamp, value=float(status[x]), controller=controller, data_type=status_titles[x]))
-
+            data_to_add.append(DataEntry(timestamp=timestamp, value=float(
+                status[x]), controller=controller, data_type=status_titles[x]))
 
         for x in data_to_add:
             print(f'{x.value}, {x.data_type}')
@@ -420,18 +414,7 @@ def all_targets(request):
 
     return JsonResponse(out)
 
-
 # For arduino to report available devices to the server
-'''
-Sample input
-{
-    controller: 1,
-    name: 'temperature', 
-    target: 25.0,
-}
-'''
-
-
 @csrf_exempt
 def report_device(request):
     out = {'message': 'failure'}
@@ -501,12 +484,6 @@ def post_as_csv(request):
     return JsonResponse(out)
 
 
-'''
-input : {controller: a}
-output : {data_types: [temperature, humidity, ph], controller: a}
-'''
-
-
 @csrf_exempt
 def controller_has_data(request):
     out = {'result': 'failure'}
@@ -550,6 +527,7 @@ def db_testing(request):
     print(f"time: {end-start}")
     return JsonResponse(out)
 
+
 @csrf_exempt
 def hourly_average(request):
     out = {'status': 'failed'}
@@ -578,25 +556,25 @@ def hourly_average(request):
 
     while(start_timestamp < end_timestamp):
         print(start_timestamp)
-        hourly_data = DataEntry.objects.filter(controller=controller, data_type = data_type, timestamp__hour = start_timestamp.hour, timestamp__day = start_timestamp.day)
+        hourly_data = DataEntry.objects.filter(
+            controller=controller, data_type=data_type, timestamp__hour=start_timestamp.hour, timestamp__day=start_timestamp.day)
         count = 0
         total = 0
         for x in hourly_data:
             total += x.value
-            count+=1
+            count += 1
             print(f'hourly : {x}')
 
         if count > 0:
             avg = total/count
         else:
             avg = 0
-            
+
         averages.append((start_timestamp.timestamp(), avg))
-        
+
         start_timestamp = start_timestamp + datetime.timedelta(hours=1)
 
-
-    out['averages'] = averages 
+    out['averages'] = averages
     out['data_type'] = data_type
     out['controller'] = controller.name
     out['date_hour'] = start
@@ -606,6 +584,7 @@ def hourly_average(request):
     # print(averages)
 
     return JsonResponse(out)
+
 
 def get_averages_as_csv(request):
     out = {'status': 'failed'}
@@ -629,21 +608,22 @@ def get_averages_as_csv(request):
 
     while(start_timestamp < end_timestamp):
         print(start_timestamp)
-        hourly_data = DataEntry.objects.filter(controller=controller, data_type = data_type, timestamp__hour = start_timestamp.hour)
+        hourly_data = DataEntry.objects.filter(
+            controller=controller, data_type=data_type, timestamp__hour=start_timestamp.hour, timestamp__day=start_timestamp.day)
         count = 0
         total = 0
         for x in hourly_data:
             total += x.value
-            count+=1
+            count += 1
             print(f'hourly : {x}')
 
         if count > 0:
             avg = total/count
         else:
             avg = 0
-            
+
         averages.append((start_timestamp.timestamp(), avg))
-        
+
         start_timestamp = start_timestamp + datetime.timedelta(hours=1)
 
     response = HttpResponse(
@@ -660,14 +640,16 @@ def get_averages_as_csv(request):
     writer.writerow(['timestamp', 'value'])
 
     for x in averages:
-        writer.writerow([datetime.datetime.fromtimestamp(x[0]).strftime("%Y-%m-%d %H:%m:%S"), x[1]])
+        writer.writerow([datetime.datetime.fromtimestamp(
+            x[0]).strftime("%Y-%m-%d %H:%m:%S"), x[1]])
 
     return response
+
 
 def control_system_activity(request):
     out = {'status': 'failed'}
 
-    # expected input : controller, data_type, 
+    # expected input : controller, data_type,
     # validate controller and data type
     # return all points where status is 1.0 (on)
 
@@ -679,22 +661,26 @@ def control_system_activity(request):
         return JsonResponse(out)
 
     data_type = request.GET.get('data_type')
+    start = datetime.datetime.fromtimestamp(int(request.GET.get('start')))
+    end = datetime.datetime.fromtimestamp(int(request.GET.get('end')))
 
     if data_type not in valid_data_types:
         out['message'] = 'this is not a valid data type for this request'
         return JsonResponse(out)
 
-    results = DataEntry.objects.filter(data_type = data_type, controller = controller).exclude(value=0.0)
+    results = DataEntry.objects.filter(
+        data_type=data_type, controller=controller, timestamp__range=(start, end)).exclude(value=0.0)
 
     output = []
     for x in results:
         output.append([x.timestamp.timestamp(), x.value])
 
-    out['results'] = output 
+    out['results'] = output
     out['controller'] = controller.name
     out['data_type'] = data_type
 
     return JsonResponse(out)
+
 
 def home(request):
     out = {'test': 'answer'}

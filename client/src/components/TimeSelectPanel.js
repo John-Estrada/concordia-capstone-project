@@ -18,8 +18,8 @@ const timePanelStyle = {
 };
 
 const resultsPanel = {
-  minWidth: "15em",
-  maxWidth: "30em",
+  minWidth: "20em",
+  maxWidth: "20em",
   border: "1px solid black",
   padding: "0.5em",
   margin: "0.25em",
@@ -149,7 +149,7 @@ const TimeSelectPanel = (props) => {
       .get(url, { params })
       .then((res) => {
         console.log(res.data.results);
-        if (res.data.results === "This controller does not exist") return;
+        if (res.data.results === "this controller does not exist") return;
         if (!res.data.results) return;
 
         let output = [];
@@ -220,8 +220,8 @@ const TimeSelectPanel = (props) => {
 
     const params = new URLSearchParams();
     params.append("controller", props.controllerName);
-    // params.append("start", Math.round(dates.begin.getTime() / 1000));
-    // params.append("end", Math.round(dates.now.getTime() / 1000));
+    params.append("start", Math.round(dates.begin.getTime() / 1000));
+    params.append("end", Math.round(dates.now.getTime() / 1000));
     params.append("data_type", props.selectedDataType);
 
     axios.get(controlSystemUrl, { params }).then((res) => {
