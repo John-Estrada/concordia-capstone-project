@@ -14,6 +14,12 @@ from .util import *
 
 
 def test_view(request):
+    x = DataEntry.objects.values_list('data_type').distinct()
+    x = x.filter(controller = Controller.objects.get(name='a'))
+
+    for a in x:
+        print(a[0])
+
     return JsonResponse({'test': 'if you can see this, the server is running'})
 
 
@@ -495,21 +501,22 @@ def controller_has_data(request):
 
     # check if controller exists
     if not (Controller.objects.filter(name=request.GET.get('controller')).exists()):
-        out['message'] = 'this controller does note exist'
+        out['message'] = 'this controller does not exist'
         return JsonResponse(out)
 
     controller_name = Controller.objects.get(
         name=request.GET.get('controller')).name
     print(f'name is {controller_name}')
 
+    controller = get_controller_or_none(request)
+
     # get list of data types that this controller has and return to the user
     data_types = []
-    results = DataEntry.objects.filter(
-        controller=Controller.objects.get(name=controller_name))
+    results = DataEntry.objects.values_list('data_type').distinct()
+    x = results.filter(controller = controller)
 
-    for x in results:
-        if x.data_type not in data_types:
-            data_types.append(x.data_type)
+    for a in results:
+        data_types.append(a[0])
 
     out['data_types'] = data_types
     out['result'] = 'success'
