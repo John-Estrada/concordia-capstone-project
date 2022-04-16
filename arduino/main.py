@@ -30,6 +30,7 @@ column_headers = 'timestamp,air_temp_1,air_temp_2,air_temp_3,air_temp_4,air_rh_1
     ',')
 default_temperature_target = 22.0
 default_humidity_target = 85.0
+default_params_string = '22.0085.00\n'
 
 
 def write_from_arduino():
@@ -55,7 +56,7 @@ def write_from_arduino():
             send_datastring(data_list, counter, 1)
 
             params_to_write = fetch_targets(
-                counter, 1)  # fetch targets every minute
+                counter, 6)  # fetch targets every minute
 
             # add writing targets to serial here
             arduino.write(params_to_write.encode('utf-8'))
@@ -142,6 +143,7 @@ def fetch_targets(counter, interval):
     except:
         log_error(
             f'{datetime.datetime.now().isoformat()} could not fetch targets')
+        return default_params_string
 
     targets = json.loads(data.content)['results']
 

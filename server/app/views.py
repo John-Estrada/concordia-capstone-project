@@ -30,7 +30,7 @@ def generic(request):
 
     # arduino uses this to send data to the server
     if request.method == 'POST':
-        print(request.POST)
+        # print(request.POST)
         server_time = datetime.datetime.now()
 
         expected_parameters = ['sensor', 'value', 'controller']
@@ -53,11 +53,11 @@ def generic(request):
             out['message'] = 'this controller does not exist'
             return JsonResponse(out)
 
-        print(
-            f"Controller found: id: {controller.id}, name: {controller.name}")
+        # print(
+        #     f"Controller found: id: {controller.id}, name: {controller.name}")
 
-        print(
-            f'type: {data_type}, value: {value}, timestamp: {server_time}, controller: {controller.name}')
+        # print(
+        #     f'type: {data_type}, value: {value}, timestamp: {server_time}, controller: {controller.name}')
 
         x = DataEntry.objects.create(
             data_type=data_type, value=value, timestamp=server_time, controller=controller)
@@ -74,13 +74,13 @@ def generic(request):
         end = datetime.datetime.fromtimestamp(int(request.GET.get('end')))
         controller = get_controller_or_none(request)
 
-        print(
-            (f'-------- Parameters --------'
-            f'data_type: {data_type}'
-            f'start: {start}'
-            f'end: {end}'
-            f'controller: {controller.name}'
-            '-------- End Parameters --------'))
+        # print(
+        #     (f'-------- Parameters --------'
+        #     f'data_type: {data_type}'
+        #     f'start: {start}'
+        #     f'end: {end}'
+        #     f'controller: {controller.name}'
+        #     '-------- End Parameters --------'))
 
         if controller == None:
             out['message'] = 'this controller does not exist'
@@ -89,17 +89,17 @@ def generic(request):
         res = DataEntry.objects.filter(data_type=data_type, timestamp__range=[
                                        start, end], controller=controller)
 
-        print(f'-------- Results --------')
+        # print(f'-------- Results --------')
 
-        if (res == None):
-            print("No results found")
+        # if (res == None):
+        #     print("No results found")
 
         for x in res:
             out['results'].append(
                 [int(x.timestamp.timestamp()), round(x.value, 2)])
-            print(out['results'])
+            # print(out['results'])
 
-        print(f'-------- End Results --------')
+        # print(f'-------- End Results --------')
 
         out['sensor'] = data_type
 
@@ -132,8 +132,8 @@ def generic(request):
 def post_with_datastring(request):
     out = {'result': 'failure'}
 
-    print(f'post by datastring')
-    print(f'datastring: {request.POST["datastring"]}')
+    # print(f'post by datastring')
+    # print(f'datastring: {request.POST["datastring"]}')
 
     expected_format = 'timestamp,air_temp_1,air_temp_2,air_temp_3,air_temp_4,air_rh_1,air_rh_2,air_rh_3,air_rh_4,effluent_temp,effluent_ec25,effluent_ph,effluent_turb_ntu,status,elapsed_time'.split(
         ',')
@@ -149,16 +149,16 @@ def post_with_datastring(request):
             return JsonResponse(out)
 
         if len(values) < len(expected_format):
-            print(len(values))
-            print(len(expected_format))
+            # print(len(values))
+            # print(len(expected_format))
             out['message'] = 'datastring too short - check for missing values'
             return JsonResponse(out)
 
         if len(values) > len(expected_format):
-            print(len(values))
-            print(len(expected_format))
-            print(expected_format[len(expected_format)-1])
-            print(values[len(values)-1])
+            #print(len(values))
+            #print(len(expected_format))
+            #print(expected_format[len(expected_format)-1])
+            #print(values[len(values)-1])
             out['message'] = 'datastring too long - check for extra values'
             return JsonResponse(out)
 
@@ -169,7 +169,7 @@ def post_with_datastring(request):
 
         timestamp = datetime.datetime.fromtimestamp(int(values[0]))
 
-        print(timestamp)
+        #print(timestamp)
 
         data_to_add = []
 
@@ -184,8 +184,8 @@ def post_with_datastring(request):
             data_to_add.append(DataEntry(timestamp=timestamp, value=float(
                 status[x]), controller=controller, data_type=status_titles[x]))
 
-        for x in data_to_add:
-            print(f'{x.value}, {x.data_type}')
+        # for x in data_to_add:
+            #print(f'{x.value}, {x.data_type}')
 
         DataEntry.objects.bulk_create(data_to_add)
 
@@ -208,7 +208,7 @@ def add_controller(request):
 
         if Controller.objects.filter(name=name).exists():
             out['message'] = 'This controller already exists'
-            print('this controller already exists')
+            #print('this controller already exists')
         elif name == '':
             out['message'] = 'Controller name cannot be empty'
         else:
@@ -219,8 +219,8 @@ def add_controller(request):
             out['result'] = 'success'
             out['message'] = f'Added new controller: name={controller.name}, id={controller.id}'
 
-            print(
-                f'Added new controller: name={controller.name}, id={controller.id}')
+            #print(
+                # f'Added new controller: name={controller.name}, id={controller.id}')
 
     response = JsonResponse(out)
     response['Access-Control-Allow-Origin'] = '*'
@@ -260,8 +260,8 @@ def get_data_as_csv(request):
     start = datetime.datetime.fromtimestamp(int(request.GET.get('start')))
     end = datetime.datetime.fromtimestamp(int(request.GET.get('end')))
 
-    print(
-        f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_name}\n-------- End Parameters --------')
+    # print(
+    #     f'-------- Parameters --------\ndata type: {data_type}, start: {start}, end: {end}, controller: {controller_name}\n-------- End Parameters --------')
 
     if Controller.objects.filter(name=controller_name).exists() == False:
         out['results'] = 'This controller does not exist'
@@ -330,11 +330,11 @@ def target_parameter(request):
         out['status'] = 'success'
         out['target'] = target_value
 
-        print('get')
+        #print('get')
 
     elif request.method == "POST":
         # send in the form controller=a, type=temperature, value=22.0
-        pprint.pprint(request.POST)
+        # pprint.p#print(request.POST)
         expected_parameters = ['controller', 'type', 'value']
         missing = []
         for param in expected_parameters:
@@ -366,9 +366,9 @@ def target_parameter(request):
 
     out['status'] = 'success'
 
-    print(f'-------- Output --------')
-    pprint.pprint(out)
-    print(f'-------- End Output --------')
+    #print(f'-------- Output --------')
+    # pprint.pprint(out)
+    #print(f'-------- End Output --------')
 
     response = JsonResponse(out)
     response['Access-Control-Allow-Origin'] = '*'
@@ -398,7 +398,7 @@ def all_targets(request):
     out = {'status': 'failed'}
 
     params_status = validate_params_missing(['controller'], request.GET)
-    print(params_status)
+    #print(params_status)
     if (params_status['message'] != 'normal'):
         out['message'] = 'controller name missing'
         return JsonResponse(out)
@@ -465,7 +465,7 @@ def post_as_csv(request):
         file = (request.FILES['data'].read().decode('utf-8'))
         controller = Controller.objects.get(name=request.POST["controller"])
         lines = file.splitlines()
-        print(lines)
+        #print(lines)
 
         reader = csv.reader(lines)
         parsed = list(reader)
@@ -474,11 +474,11 @@ def post_as_csv(request):
         for column in range(1, len(parsed[0])):
             column_name = parsed[0][column]
 
-            print(f'column: {column_name}')
+            #print(f'column: {column_name}')
             for row in parsed[1:]:
                 timestamp = datetime.datetime.fromisoformat(row[0])
-                print(
-                    f'type: {column_name}, time: {row[0]}, data: {row[column]}')
+                #print(
+                    # f'type: {column_name}, time: {row[0]}, data: {row[column]}')
 
                 entries.append(DataEntry(data_type=column_name, value=float(
                     row[column]), timestamp=timestamp, controller=controller))
@@ -506,7 +506,7 @@ def controller_has_data(request):
 
     controller_name = Controller.objects.get(
         name=request.GET.get('controller')).name
-    print(f'name is {controller_name}')
+    #print(f'name is {controller_name}')
 
     controller = get_controller_or_none(request)
 
@@ -528,10 +528,10 @@ def db_testing(request):
     out = {'db': 'done'}
     start = time.time()
 
-    print(DataEntry.objects.filter(controller=Controller.objects.get(id=1)))
+    #print(DataEntry.objects.filter(controller=Controller.objects.get(id=1)))
 
     end = time.time()
-    print(f"time: {end-start}")
+    #print(f"time: {end-start}")
     return JsonResponse(out)
 
 
@@ -559,10 +559,10 @@ def hourly_average(request):
     end_timestamp = end_timestamp.replace(minute=0).replace(second=0)
 
     averages = []
-    print('x')
+    # print('x')
 
     while(start_timestamp < end_timestamp):
-        print(start_timestamp)
+        #print(start_timestamp)
         hourly_data = DataEntry.objects.filter(
             controller=controller, data_type=data_type, timestamp__hour=start_timestamp.hour, timestamp__day=start_timestamp.day)
         count = 0
@@ -570,7 +570,7 @@ def hourly_average(request):
         for x in hourly_data:
             total += x.value
             count += 1
-            print(f'hourly : {x}')
+            #print(f'hourly : {x}')
 
         if count > 0:
             avg = total/count
@@ -587,7 +587,7 @@ def hourly_average(request):
     out['date_hour'] = start
     out['status'] = 'success'
 
-    print('a')
+    #print('a')
     # print(averages)
 
     return JsonResponse(out)
@@ -611,10 +611,10 @@ def get_averages_as_csv(request):
     end_timestamp = end_timestamp.replace(minute=0).replace(second=0)
 
     averages = []
-    print('x')
+    #print('x')
 
     while(start_timestamp < end_timestamp):
-        print(start_timestamp)
+        #print(start_timestamp)
         hourly_data = DataEntry.objects.filter(
             controller=controller, data_type=data_type, timestamp__hour=start_timestamp.hour, timestamp__day=start_timestamp.day)
         count = 0
@@ -622,7 +622,7 @@ def get_averages_as_csv(request):
         for x in hourly_data:
             total += x.value
             count += 1
-            print(f'hourly : {x}')
+            #print(f'hourly : {x}')
 
         if count > 0:
             avg = total/count
@@ -685,6 +685,7 @@ def control_system_activity(request):
     out['results'] = output
     out['controller'] = controller.name
     out['data_type'] = data_type
+    out['status'] = 'success'
 
     return JsonResponse(out)
 
